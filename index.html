@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lost &amp; Found Board</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root{
+    --cork: #a9784f;
+    --cork-dark: #8a5f3c;
+    --card: #fbf3df;
+    --card-shadow: rgba(40, 25, 10, 0.35);
+    --ink: #2b2118;
+    --ink-soft: #5c4a38;
+    --lost: #b83227;
+    --found: #4f7a3f;
+    --tape: #f3e6a8;
+    --tape-edge: #e5d489;
+    --paper-line: rgba(43,33,24,0.08);
+  }
+
+  *{ box-sizing: border-box; }
+  [hidden]{ display: none !important; }
+
+  body{
+    margin:0;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,0.05), transparent 40%),
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.03) 0px, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 3px),
+      var(--cork);
+    min-height: 100vh;
+    padding: 28px 18px 60px;
+  }
+
+  .board{ max-width: 1080px; margin: 0 auto; }
+
+  /* ---------- Header ---------- */
+  .board-header{
+    position: relative;
+    text-align: center;
+    padding: 22px 20px 30px;
+    margin-bottom: 26px;
+  }
+  .board-header h1{
+    font-family: 'Kalam', cursive;
+    font-weight: 700;
+    font-size: clamp(2.4rem, 6vw, 3.6rem);
+    color: #fff8ea;
+    text-shadow: 2px 3px 0 rgba(0,0,0,0.25);
+    margin: 0 0 4px;
+    letter-spacing: 1px;
+    transform: rotate(-1deg);
+  }
+  .board-header p.tagline{
+    font-family: 'Inter', sans-serif;
+    color: #fdf3d9;
+    opacity: 0.85;
+    margin: 0 0 20px;
+    font-size: 0.95rem;
+  }
+  .header-btns{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .post-btn, .alert-btn{
+    font-family: 'Kalam', cursive;
+    font-size: 1.05rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 3px;
+    padding: 11px 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.25), 0 6px 10px rgba(0,0,0,0.2);
+    transition: transform 0.15s ease;
+  }
+  .post-btn{ background: var(--card); color: var(--ink); transform: rotate(1deg); }
+  .alert-btn{ background: var(--tape); color: var(--ink); transform: rotate(-1deg); }
+  .post-btn:hover{ transform: rotate(1deg) translateY(-2px); }
+  .alert-btn:hover{ transform: rotate(-1deg) translateY(-2px); }
+  .post-btn:active{ transform: rotate(1deg) translateY(1px); box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+  .alert-btn:active{ transform: rotate(-1deg) translateY(1px); box-shadow: 0 2px 0 rgba(0,0,0,0.25); }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+  .tabs{ display: flex; gap: 6px; background: rgba(0,0,0,0.15); padding: 4px; border-radius: 20px; }
+  .tabs button{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    border: none;
+    background: transparent;
+    color: #fdf3d9;
+    padding: 8px 16px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .tabs button.active{ background: var(--card); color: var(--ink); }
+
+  .controls input[type="text"], .controls select{
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    border: none;
+    border-radius: 16px;
+    padding: 9px 16px;
+    background: rgba(255,255,255,0.92);
+    color: var(--ink);
+    outline: none;
+  }
+  .controls input[type="text"]{ min-width: 200px; }
+
+  /* ---------- Grid ---------- */
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 34px 24px;
+    align-items: start;
+  }
+
+  /* ---------- Card ---------- */
+  .card{
+    position: relative;
+    background: var(--card);
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size: 100% 26px;
+    padding: 30px 18px 20px;
+    border-radius: 2px;
+    box-shadow: 3px 6px 14px var(--card-shadow);
+    transform: rotate(var(--tilt, 0deg));
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card:hover{ transform: rotate(var(--tilt, 0deg)) translateY(-4px) scale(1.015); box-shadow: 4px 10px 20px var(--card-shadow); }
+  .card.resolved{ opacity: 0.72; }
+
+  .pin{
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    box-shadow: 0 3px 4px rgba(0,0,0,0.4), inset 0 -3px 4px rgba(0,0,0,0.25), inset 0 2px 3px rgba(255,255,255,0.5);
+    z-index: 2;
+  }
+  .pin.lost{ background: radial-gradient(circle at 35% 30%, #e2685c, var(--lost)); }
+  .pin.found{ background: radial-gradient(circle at 35% 30%, #7ea86a, var(--found)); }
+
+  .stamp{
+    position: absolute;
+    top: 14px;
+    right: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    border: 1.5px dashed currentColor;
+    transform: rotate(6deg);
+    background: var(--card);
+    z-index: 1;
+  }
+  .stamp.lost{ color: var(--lost); }
+  .stamp.found{ color: var(--found); }
+  .stamp.done{ color: var(--ink-soft); border-style: solid; transform: rotate(-6deg); }
+
+  .card-icon{ font-size: 2.1rem; text-align: center; margin: 4px 0 8px; }
+
+  .card-photo{
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 2px;
+    margin: 4px 0 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    cursor: zoom-in;
+    display: block;
+  }
+  .photo-count{
+    position:absolute; bottom: 10px; left: 10px;
+    background: rgba(0,0,0,0.55); color:#fff;
+    font-family:'JetBrains Mono', monospace; font-size:0.62rem;
+    padding: 2px 6px; border-radius: 10px;
+  }
+  .photo-wrap{ position: relative; }
+
+  .card h3{
+    font-family: 'Kalam', cursive;
+    font-size: 1.3rem;
+    margin: 0 0 6px;
+    text-align: center;
+    line-height: 1.15;
+  }
+  .card .meta{
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    text-align: center;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .card p.desc{
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--ink);
+    margin: 0 0 14px;
+    min-height: 38px;
+  }
+  .card .where{
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+  }
+  .card .where b{ color: var(--ink); font-weight: 600; }
+
+  .card-actions{ display:flex; justify-content:center; margin-bottom: 6px; }
+  .resolve-btn{
+    font-family: 'Inter', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: none;
+    border: 1px solid var(--ink-soft);
+    color: var(--ink-soft);
+    padding: 5px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  .resolve-btn:hover{ background: var(--ink-soft); color: var(--card); }
+
+  /* Tear-off tabs */
+  .tabs-strip{
+    display: flex;
+    border-top: 1px dashed rgba(43,33,24,0.35);
+    margin-top: 6px;
+    padding-top: 2px;
+  }
+  .tab{
+    flex: 1;
+    text-align: center;
+    border-left: 1px dashed rgba(43,33,24,0.35);
+    padding: 8px 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    color: var(--ink-soft);
+    writing-mode: vertical-rl;
+    letter-spacing: 0.04em;
+    max-height: 68px;
+  }
+  .tab:first-child{ border-left: none; }
+
+  /* ---------- Empty state ---------- */
+  .empty-state{
+    text-align: center;
+    color: #fdf3d9;
+    padding: 60px 20px;
+  }
+  .empty-state .tape-note{
+    display: inline-block;
+    background: var(--card);
+    color: var(--ink);
+    font-family: 'Kalam', cursive;
+    font-size: 1.15rem;
+    padding: 18px 30px;
+    border-radius: 2px;
+    box-shadow: 3px 6px 14px var(--card-shadow);
+    transform: rotate(-1.5deg);
+  }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay{
+    position: fixed; inset: 0;
+    background: rgba(20,14,8,0.55);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    z-index: 10;
+  }
+  .modal-card{
+    width: 100%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--card);
+    background-image: linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size: 100% 26px;
+    border-radius: 3px;
+    padding: 26px 24px 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    position: relative;
+  }
+  .modal-card .tape{
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%) rotate(-2deg);
+    width: 90px; height: 26px; background: var(--tape);
+    border: 1px solid var(--tape-edge);
+    opacity: 0.9;
+  }
+  .modal-close{
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(43,33,24,0.1);
+    color: var(--ink);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover{ background: rgba(43,33,24,0.2); }
+  .modal-card h2{
+    font-family: 'Kalam', cursive;
+    font-size: 1.5rem;
+    margin: 6px 0 16px;
+    text-align: center;
+  }
+  .field{ margin-bottom: 12px; }
+  .field label{
+    display:block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .field input, .field select, .field textarea{
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.88rem;
+    padding: 8px 10px;
+    border-radius: 3px;
+    border: 1px solid rgba(43,33,24,0.25);
+    background: #fffdf7;
+    color: var(--ink);
+    outline: none;
+  }
+  .field textarea{ resize: vertical; min-height: 60px; }
+  .type-toggle{ display: flex; gap: 8px; margin-bottom: 14px; }
+  .type-toggle button{
+    flex: 1;
+    font-family: 'Kalam', cursive;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 9px;
+    border-radius: 3px;
+    border: 2px solid rgba(43,33,24,0.2);
+    background: transparent;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .type-toggle button.active.lost{ background: var(--lost); border-color: var(--lost); color: #fff; }
+  .type-toggle button.active.found{ background: var(--found); border-color: var(--found); color: #fff; }
+
+  .photo-input-wrap{
+    border: 2px dashed rgba(43,33,24,0.25);
+    border-radius: 4px;
+    padding: 10px;
+    text-align: center;
+  }
+  .photo-input-wrap input[type="file"]{
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    width: 100%;
+  }
+  .photo-previews{ display:flex; gap:8px; margin-top: 8px; flex-wrap: wrap; }
+  .photo-previews .thumb{ position: relative; width: 56px; height: 56px; }
+  .photo-previews .thumb img{ width:100%; height:100%; object-fit:cover; border-radius:3px; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+  .photo-previews .thumb button{
+    position:absolute; top:-6px; right:-6px;
+    width:18px; height:18px; border-radius:50%;
+    border:none; background: var(--lost); color:#fff;
+    font-size: 0.65rem; line-height:1; cursor:pointer;
+  }
+  .photo-hint{ font-size: 0.68rem; color: var(--ink-soft); margin-top: 6px; }
+
+  .modal-actions{ display:flex; gap: 10px; margin-top: 16px; }
+  .modal-actions button{
+    flex: 1;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.88rem;
+    padding: 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-cancel{ background: transparent; border: 1px solid var(--ink-soft) !important; color: var(--ink-soft); }
+  .btn-submit{ background: var(--ink); color: var(--card); }
+
+  .hint{ font-size: 0.72rem; color: var(--ink-soft); text-align:center; margin-top: 4px; }
+
+  /* Lightbox */
+  .lightbox-overlay{
+    position: fixed; inset:0; background: rgba(10,7,4,0.85);
+    display:flex; align-items:center; justify-content:center;
+    z-index: 20; padding: 20px;
+  }
+  .lightbox-overlay img{ max-width: 100%; max-height: 85vh; border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+  .lightbox-close{
+    position:absolute; top:20px; right:24px;
+    width:36px; height:36px; border-radius:50%;
+    border:none; background: rgba(255,255,255,0.15); color:#fff;
+    font-size:1.3rem; cursor:pointer;
+  }
+
+  /* Alerts modal */
+  .watch-list{ margin: 10px 0 16px; }
+  .watch-item{
+    display:flex; justify-content:space-between; align-items:center;
+    background: rgba(43,33,24,0.06); border-radius: 4px;
+    padding: 8px 10px; font-size: 0.8rem; margin-bottom: 6px;
+  }
+  .watch-item button{
+    border:none; background:none; color: var(--lost); cursor:pointer; font-weight:600; font-size: 0.75rem;
+  }
+  .toast{
+    position: fixed; top: 16px; right: 16px;
+    background: var(--card); color: var(--ink);
+    padding: 14px 18px; border-radius: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    font-family: 'Inter', sans-serif; font-size: 0.85rem;
+    max-width: 300px; z-index: 30;
+    border-left: 4px solid var(--found);
+  }
+  .toast strong{ display:block; font-family:'Kalam', cursive; font-size: 1rem; margin-bottom:2px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .card, .post-btn, .alert-btn{ transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="board">
+  <header class="board-header">
+    <h1>Lost &amp; Found</h1>
+    <p class="tagline">Pin up what you've lost. Post what you've found. Let's get it back home.</p>
+    <div class="header-btns">
+      <button class="post-btn" id="postBtn">+ Post a flyer</button>
+      <button class="alert-btn" id="alertBtn">🔔 Set up alerts</button>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="tabs" id="tabs">
+      <button data-filter="all" class="active">All</button>
+      <button data-filter="lost">Lost</button>
+      <button data-filter="found">Found</button>
+    </div>
+    <input type="text" id="searchInput" placeholder="Search the board…">
+    <select id="categoryFilter">
+      <option value="all">All categories</option>
+      <option value="Keys">🔑 Keys</option>
+      <option value="Phone">📱 Phone</option>
+      <option value="Wallet">👛 Wallet / Purse</option>
+      <option value="Bag">🎒 Bag</option>
+      <option value="Jewelry">💍 Jewelry</option>
+      <option value="Pet">🐾 Pet</option>
+      <option value="Clothing">🧥 Clothing</option>
+      <option value="Electronics">💻 Electronics</option>
+      <option value="Documents">📄 Documents / ID</option>
+      <option value="Other">📦 Other</option>
+    </select>
+  </div>
+
+  <div class="grid" id="grid"></div>
+  <div class="empty-state" id="emptyState" hidden>
+    <div class="tape-note">The board's empty right now — be the first to pin something up.</div>
+  </div>
+</div>
+
+<!-- Post flyer modal -->
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <form class="modal-card" id="postForm">
+    <div class="tape"></div>
+    <button type="button" class="modal-close" id="modalCloseBtn" aria-label="Close">✕</button>
+    <h2 id="modalTitle">Post a flyer</h2>
+
+    <div class="type-toggle" id="typeToggle">
+      <button type="button" data-type="lost" class="active lost">I lost something</button>
+      <button type="button" data-type="found" class="found">I found something</button>
+    </div>
+
+    <div class="field">
+      <label for="f-title">Item</label>
+      <input type="text" id="f-title" placeholder="e.g. Blue backpack" required maxlength="60">
+    </div>
+
+    <div class="field">
+      <label for="f-category">Category</label>
+      <select id="f-category">
+        <option>Keys</option>
+        <option>Phone</option>
+        <option>Wallet</option>
+        <option>Bag</option>
+        <option>Jewelry</option>
+        <option>Pet</option>
+        <option>Clothing</option>
+        <option>Electronics</option>
+        <option>Documents</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="f-desc">Description</label>
+      <textarea id="f-desc" placeholder="Color, brand, distinguishing details…" required maxlength="220"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="f-location">Location</label>
+      <input type="text" id="f-location" placeholder="Where it was lost / found" required maxlength="60">
+    </div>
+
+    <div class="field">
+      <label for="f-date">Date</label>
+      <input type="date" id="f-date" required>
+    </div>
+
+    <div class="field">
+      <label for="f-contact">Contact info</label>
+      <input type="text" id="f-contact" placeholder="Email or phone number" required maxlength="60">
+    </div>
+
+    <div class="field">
+      <label for="f-photos">Photos (optional, up to 3)</label>
+      <div class="photo-input-wrap">
+        <input type="file" id="f-photos" accept="image/*" multiple>
+        <div class="photo-previews" id="photoPreviews"></div>
+        <div class="photo-hint" id="photoHint">Photos are resized and stored with the post.</div>
+      </div>
+    </div>
+
+    <p class="hint">Flyers are visible to everyone on this board.</p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+      <button type="submit" class="btn-submit">Pin it up</button>
+    </div>
+  </form>
+</div>
+
+<!-- Alerts modal -->
+<div class="modal-overlay" id="alertOverlay" hidden>
+  <div class="modal-card">
+    <div class="tape"></div>
+    <button type="button" class="modal-close" id="alertCloseBtn" aria-label="Close">✕</button>
+    <h2>Watch for a match</h2>
+    <p class="hint" style="margin-bottom:14px;">This board has no mail server behind it, so it can't send real emails or texts. What it <em>can</em> do: while this page is open in your browser (even in a background tab), it checks for new posts every 30 seconds and fires a browser notification when something matches.</p>
+
+    <div class="field">
+      <label for="w-type">Notify me when someone posts…</label>
+      <select id="w-type">
+        <option value="found">A found item</option>
+        <option value="lost">A lost item</option>
+        <option value="any">Either</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="w-category">Category</label>
+      <select id="w-category">
+        <option value="any">Any category</option>
+        <option>Keys</option>
+        <option>Phone</option>
+        <option>Wallet</option>
+        <option>Bag</option>
+        <option>Jewelry</option>
+        <option>Pet</option>
+        <option>Clothing</option>
+        <option>Electronics</option>
+        <option>Documents</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="w-keyword">Keyword (optional)</label>
+      <input type="text" id="w-keyword" placeholder="e.g. black labrador, iPhone 14">
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-submit" id="addWatchBtn" style="flex:none; padding:10px 18px;">Add watch</button>
+    </div>
+
+    <div class="watch-list" id="watchList"></div>
+    <p class="hint" id="notifPermHint"></p>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox-overlay" id="lightboxOverlay" hidden>
+  <button class="lightbox-close" id="lightboxClose">✕</button>
+  <img id="lightboxImg" src="" alt="Item photo">
+</div>
+
+<script>
+(function(){
+  const CATEGORY_ICONS = {
+    Keys: '🔑', Phone: '📱', Wallet: '👛', Bag: '🎒', Jewelry: '💍',
+    Pet: '🐾', Clothing: '🧥', Electronics: '💻', Documents: '📄', Other: '📦'
+  };
+
+  const grid = document.getElementById('grid');
+  const emptyState = document.getElementById('emptyState');
+  const postBtn = document.getElementById('postBtn');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const postForm = document.getElementById('postForm');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const modalCloseBtn = document.getElementById('modalCloseBtn');
+  const typeToggle = document.getElementById('typeToggle');
+  const tabs = document.getElementById('tabs');
+  const searchInput = document.getElementById('searchInput');
+  const categoryFilter = document.getElementById('categoryFilter');
+  const photoInput = document.getElementById('f-photos');
+  const photoPreviews = document.getElementById('photoPreviews');
+  const photoHint = document.getElementById('photoHint');
+
+  const alertBtn = document.getElementById('alertBtn');
+  const alertOverlay = document.getElementById('alertOverlay');
+  const alertCloseBtn = document.getElementById('alertCloseBtn');
+  const addWatchBtn = document.getElementById('addWatchBtn');
+  const watchList = document.getElementById('watchList');
+  const notifPermHint = document.getElementById('notifPermHint');
+
+  const lightboxOverlay = document.getElementById('lightboxOverlay');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxClose = document.getElementById('lightboxClose');
+
+  let items = [];
+  let currentType = 'lost';
+  let activeFilter = 'all';
+  let pendingPhotos = [];
+  let watches = [];
+  let seenIds = new Set();
+  let pollTimer = null;
+
+  const ITEMS_KEY = 'lost-found-items';
+  const WATCH_KEY = 'lost-found-watches';
+
+  function uid(){ return 'item_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+  async function loadItems(){
+    try{
+      const res = await window.storage.get(ITEMS_KEY, true);
+      items = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){
+      items = [];
+    }
+    items.forEach(it => seenIds.add(it.id));
+    render();
+  }
+
+  async function saveItems(){
+    try{
+      const result = await window.storage.set(ITEMS_KEY, JSON.stringify(items), true);
+      if(!result){ throw new Error('no result'); }
+    }catch(e){
+      console.error('Could not save to the board', e);
+      alert('Sorry — that post could not be saved (it may be too large with photos attached). Try smaller or fewer photos.');
+    }
+  }
+
+  async function loadWatches(){
+    try{
+      const res = await window.storage.get(WATCH_KEY, false);
+      watches = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){
+      watches = [];
+    }
+    renderWatches();
+  }
+
+  async function saveWatches(){
+    try{
+      await window.storage.set(WATCH_KEY, JSON.stringify(watches), false);
+    }catch(e){
+      console.error('Could not save watch list', e);
+    }
+  }
+
+  function formatDate(iso){
+    if(!iso) return '';
+    const d = new Date(iso + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function seedTilt(id){
+    let hash = 0;
+    for(let i=0;i<id.length;i++){ hash = (hash*31 + id.charCodeAt(i)) % 1000; }
+    return ((hash % 60) / 10 - 3).toFixed(1);
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function render(){
+    const q = searchInput.value.trim().toLowerCase();
+    const cat = categoryFilter.value;
+
+    const filtered = items.filter(it => {
+      if(activeFilter !== 'all' && it.type !== activeFilter) return false;
+      if(cat !== 'all' && it.category !== cat) return false;
+      if(q){
+        const hay = (it.title + ' ' + it.description + ' ' + it.location + ' ' + it.category).toLowerCase();
+        if(!hay.includes(q)) return false;
+      }
+      return true;
+    }).sort((a,b) => b.createdAt - a.createdAt);
+
+    grid.innerHTML = '';
+    if(filtered.length === 0){
+      emptyState.hidden = false;
+      return;
+    }
+    emptyState.hidden = true;
+
+    filtered.forEach(it => {
+      const card = document.createElement('div');
+      card.className = 'card' + (it.resolved ? ' resolved' : '');
+      card.style.setProperty('--tilt', seedTilt(it.id) + 'deg');
+
+      const pin = document.createElement('div');
+      pin.className = 'pin ' + it.type;
+      card.appendChild(pin);
+
+      const stamp = document.createElement('div');
+      if(it.resolved){
+        stamp.className = 'stamp done';
+        stamp.textContent = it.type === 'lost' ? 'Reunited' : 'Claimed';
+      } else {
+        stamp.className = 'stamp ' + it.type;
+        stamp.textContent = it.type;
+      }
+      card.appendChild(stamp);
+
+      if(it.photos && it.photos.length){
+        const wrap = document.createElement('div');
+        wrap.className = 'photo-wrap';
+        const img = document.createElement('img');
+        img.className = 'card-photo';
+        img.src = it.photos[0];
+        img.alt = it.title;
+        img.addEventListener('click', () => openLightbox(it.photos[0]));
+        wrap.appendChild(img);
+        if(it.photos.length > 1){
+          const count = document.createElement('div');
+          count.className = 'photo-count';
+          count.textContent = '+' + (it.photos.length - 1) + ' more';
+          wrap.appendChild(count);
+        }
+        card.appendChild(wrap);
+      } else {
+        const icon = document.createElement('div');
+        icon.className = 'card-icon';
+        icon.textContent = CATEGORY_ICONS[it.category] || '📦';
+        card.appendChild(icon);
+      }
+
+      const h3 = document.createElement('h3');
+      h3.textContent = it.title;
+      card.appendChild(h3);
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.textContent = it.category + ' · ' + formatDate(it.date);
+      card.appendChild(meta);
+
+      const desc = document.createElement('p');
+      desc.className = 'desc';
+      desc.textContent = it.description;
+      card.appendChild(desc);
+
+      const where = document.createElement('div');
+      where.className = 'where';
+      where.innerHTML = '<span>📍</span><span><b>' + escapeHtml(it.location) + '</b></span>';
+      card.appendChild(where);
+
+      if(!it.resolved){
+        const actions = document.createElement('div');
+        actions.className = 'card-actions';
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'resolve-btn';
+        btn.textContent = it.type === 'lost' ? 'Mark as found' : 'Mark as claimed';
+        btn.addEventListener('click', () => resolveItem(it.id));
+        actions.appendChild(btn);
+        card.appendChild(actions);
+      }
+
+      const stripWrap = document.createElement('div');
+      stripWrap.className = 'tabs-strip';
+      for(let i=0;i<5;i++){
+        const tab = document.createElement('div');
+        tab.className = 'tab';
+        tab.textContent = it.contact;
+        stripWrap.appendChild(tab);
+      }
+      card.appendChild(stripWrap);
+
+      grid.appendChild(card);
+    });
+  }
+
+  async function resolveItem(id){
+    const it = items.find(x => x.id === id);
+    if(!it) return;
+    it.resolved = true;
+    render();
+    await saveItems();
+  }
+
+  function compressImage(file, maxDim, quality){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width, h = img.height;
+          if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
+          else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderPhotoPreviews(){
+    photoPreviews.innerHTML = '';
+    pendingPhotos.forEach((src, idx) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'thumb';
+      const img = document.createElement('img');
+      img.src = src;
+      thumb.appendChild(img);
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.textContent = '✕';
+      rm.addEventListener('click', () => { pendingPhotos.splice(idx,1); renderPhotoPreviews(); });
+      thumb.appendChild(rm);
+      photoPreviews.appendChild(thumb);
+    });
+    photoHint.textContent = pendingPhotos.length
+      ? pendingPhotos.length + ' photo(s) attached — resized to keep the post small.'
+      : 'Photos are resized and stored with the post.';
+  }
+
+  photoInput.addEventListener('change', async () => {
+    const files = Array.from(photoInput.files || []);
+    const room = 3 - pendingPhotos.length;
+    const toProcess = files.slice(0, room);
+    if(files.length > room){
+      photoHint.textContent = 'Only ' + room + ' more photo(s) can be added (max 3 total).';
+    }
+    for(const f of toProcess){
+      try{
+        const dataUrl = await compressImage(f, 800, 0.7);
+        pendingPhotos.push(dataUrl);
+      }catch(e){ console.error('Could not process photo', e); }
+    }
+    photoInput.value = '';
+    renderPhotoPreviews();
+  });
+
+  function openLightbox(src){
+    lightboxImg.src = src;
+    lightboxOverlay.hidden = false;
+  }
+  function closeLightbox(){ lightboxOverlay.hidden = true; lightboxImg.src=''; }
+  lightboxClose.addEventListener('click', closeLightbox);
+  lightboxOverlay.addEventListener('click', (e) => { if(e.target === lightboxOverlay) closeLightbox(); });
+
+  function closeAllModals(){
+    modalOverlay.hidden = true;
+    alertOverlay.hidden = true;
+    lightboxOverlay.hidden = true;
+  }
+
+  function openModal(){
+    closeAllModals();
+    postForm.reset();
+    pendingPhotos = [];
+    renderPhotoPreviews();
+    document.getElementById('f-date').valueAsDate = new Date();
+    setType('lost');
+    modalOverlay.hidden = false;
+  }
+  function closeModal(){
+    modalOverlay.hidden = true;
+    pendingPhotos = [];
+    renderPhotoPreviews();
+  }
+
+  function setType(type){
+    currentType = type;
+    typeToggle.querySelectorAll('button').forEach(b => {
+      b.classList.toggle('active', b.dataset.type === type);
+    });
+    document.getElementById('modalTitle').textContent = type === 'lost' ? 'Post a lost item' : 'Post a found item';
+  }
+
+  postBtn.addEventListener('click', openModal);
+  cancelBtn.addEventListener('click', closeModal);
+  modalCloseBtn.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', (e) => { if(e.target === modalOverlay) closeModal(); });
+  typeToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-type]');
+    if(btn) setType(btn.dataset.type);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if(e.key !== 'Escape') return;
+    if(!modalOverlay.hidden) closeModal();
+    if(!alertOverlay.hidden) alertOverlay.hidden = true;
+    if(!lightboxOverlay.hidden) closeLightbox();
+  });
+
+  postForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = postForm.querySelector('.btn-submit');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Pinning up…';
+    const newItem = {
+      id: uid(),
+      type: currentType,
+      title: document.getElementById('f-title').value.trim(),
+      category: document.getElementById('f-category').value,
+      description: document.getElementById('f-desc').value.trim(),
+      location: document.getElementById('f-location').value.trim(),
+      date: document.getElementById('f-date').value,
+      contact: document.getElementById('f-contact').value.trim(),
+      photos: pendingPhotos.slice(),
+      resolved: false,
+      createdAt: Date.now()
+    };
+    items.push(newItem);
+    seenIds.add(newItem.id);
+    closeModal();
+    render();
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Pin it up';
+    await saveItems();
+  });
+
+  tabs.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-filter]');
+    if(!btn) return;
+    activeFilter = btn.dataset.filter;
+    tabs.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    render();
+  });
+  searchInput.addEventListener('input', render);
+  categoryFilter.addEventListener('change', render);
+
+  function renderWatches(){
+    watchList.innerHTML = '';
+    watches.forEach((w, idx) => {
+      const row = document.createElement('div');
+      row.className = 'watch-item';
+      const label = document.createElement('span');
+      label.textContent = (w.type === 'any' ? 'Either' : (w.type === 'found' ? 'Found' : 'Lost')) +
+        ' · ' + w.category + (w.keyword ? ' · "' + w.keyword + '"' : '');
+      row.appendChild(label);
+      const rm = document.createElement('button');
+      rm.textContent = 'Remove';
+      rm.addEventListener('click', async () => {
+        watches.splice(idx, 1);
+        renderWatches();
+        await saveWatches();
+      });
+      row.appendChild(rm);
+      watchList.appendChild(row);
+    });
+    if(watches.length === 0){
+      const p = document.createElement('p');
+      p.className = 'hint';
+      p.textContent = 'No watches yet.';
+      watchList.appendChild(p);
+    }
+  }
+
+  function updateNotifHint(){
+    if(!('Notification' in window)){
+      notifPermHint.textContent = 'This browser does not support notifications, so matches will only show as an on-page alert while you have this tab open.';
+      return;
+    }
+    if(Notification.permission === 'granted'){
+      notifPermHint.textContent = 'Browser notifications are on.';
+    } else if(Notification.permission === 'denied'){
+      notifPermHint.textContent = 'Notifications are blocked in this browser — matches will still show as an on-page alert.';
+    } else {
+      notifPermHint.textContent = 'Adding a watch will ask permission to send browser notifications.';
+    }
+  }
+
+  alertBtn.addEventListener('click', () => { closeAllModals(); alertOverlay.hidden = false; updateNotifHint(); });
+  alertCloseBtn.addEventListener('click', () => { alertOverlay.hidden = true; });
+  alertOverlay.addEventListener('click', (e) => { if(e.target === alertOverlay) alertOverlay.hidden = true; });
+
+  addWatchBtn.addEventListener('click', async () => {
+    if('Notification' in window && Notification.permission === 'default'){
+      try{ await Notification.requestPermission(); }catch(e){}
+    }
+    const w = {
+      type: document.getElementById('w-type').value,
+      category: document.getElementById('w-category').value,
+      keyword: document.getElementById('w-keyword').value.trim().toLowerCase()
+    };
+    watches.push(w);
+    document.getElementById('w-keyword').value = '';
+    renderWatches();
+    updateNotifHint();
+    await saveWatches();
+    startPolling();
+  });
+
+  function itemMatchesWatch(it, w){
+    if(w.type !== 'any' && it.type !== w.type) return false;
+    if(w.category !== 'any' && it.category !== w.category) return false;
+    if(w.keyword){
+      const hay = (it.title + ' ' + it.description).toLowerCase();
+      if(!hay.includes(w.keyword)) return false;
+    }
+    return true;
+  }
+
+  function showToast(item){
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = '<strong>Possible match!</strong>' + escapeHtml(item.title) + ' — ' + escapeHtml(item.location);
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 8000);
+  }
+
+  function notifyMatch(item){
+    showToast(item);
+    if('Notification' in window && Notification.permission === 'granted'){
+      try{
+        new Notification('Lost & Found: possible match', {
+          body: item.title + ' — ' + item.location,
+        });
+      }catch(e){}
+    }
+  }
+
+  async function pollForMatches(){
+    if(watches.length === 0) return;
+    let latestItems;
+    try{
+      const res = await window.storage.get(ITEMS_KEY, true);
+      latestItems = res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ return; }
+
+    const newOnes = latestItems.filter(it => !seenIds.has(it.id));
+    if(newOnes.length){
+      newOnes.forEach(it => {
+        seenIds.add(it.id);
+        watches.forEach(w => { if(itemMatchesWatch(it, w)) notifyMatch(it); });
+      });
+      items = latestItems;
+      render();
+    }
+  }
+
+  function startPolling(){
+    if(pollTimer) return;
+    pollTimer = setInterval(pollForMatches, 30000);
+  }
+
+  loadItems().then(() => {
+    loadWatches().then(() => { if(watches.length) startPolling(); });
+  });
+})();
+</script>
+
+</body>
+</html>
