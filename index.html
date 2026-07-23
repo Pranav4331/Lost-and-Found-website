@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lost &amp; Found Board</title>
+<title>Amrita School of Engineering, Kollam — Lost &amp; Found</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -45,6 +45,26 @@
     text-align: center;
     padding: 22px 20px 30px;
     margin-bottom: 26px;
+  }
+  .college-logo{
+    width: 68px;
+    height: 68px;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 50%;
+    padding: 6px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+    margin-bottom: 10px;
+  }
+  .college-name{
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #fdf3d9;
+    opacity: 0.9;
+    margin: 0 0 6px;
   }
   .board-header h1{
     font-family: 'Kalam', cursive;
@@ -179,24 +199,6 @@
   .stamp.done{ color: var(--ink-soft); border-style: solid; transform: rotate(-6deg); }
 
   .card-icon{ font-size: 2.1rem; text-align: center; margin: 4px 0 8px; }
-
-  .card-photo{
-    width: 100%;
-    height: 130px;
-    object-fit: cover;
-    border-radius: 2px;
-    margin: 4px 0 10px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-    cursor: zoom-in;
-    display: block;
-  }
-  .photo-count{
-    position:absolute; bottom: 10px; left: 10px;
-    background: rgba(0,0,0,0.55); color:#fff;
-    font-family:'JetBrains Mono', monospace; font-size:0.62rem;
-    padding: 2px 6px; border-radius: 10px;
-  }
-  .photo-wrap{ position: relative; }
 
   .card h3{
     font-family: 'Kalam', cursive;
@@ -369,28 +371,6 @@
   .type-toggle button.active.lost{ background: var(--lost); border-color: var(--lost); color: #fff; }
   .type-toggle button.active.found{ background: var(--found); border-color: var(--found); color: #fff; }
 
-  .photo-input-wrap{
-    border: 2px dashed rgba(43,33,24,0.25);
-    border-radius: 4px;
-    padding: 10px;
-    text-align: center;
-  }
-  .photo-input-wrap input[type="file"]{
-    font-family: 'Inter', sans-serif;
-    font-size: 0.78rem;
-    width: 100%;
-  }
-  .photo-previews{ display:flex; gap:8px; margin-top: 8px; flex-wrap: wrap; }
-  .photo-previews .thumb{ position: relative; width: 56px; height: 56px; }
-  .photo-previews .thumb img{ width:100%; height:100%; object-fit:cover; border-radius:3px; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
-  .photo-previews .thumb button{
-    position:absolute; top:-6px; right:-6px;
-    width:18px; height:18px; border-radius:50%;
-    border:none; background: var(--lost); color:#fff;
-    font-size: 0.65rem; line-height:1; cursor:pointer;
-  }
-  .photo-hint{ font-size: 0.68rem; color: var(--ink-soft); margin-top: 6px; }
-
   .modal-actions{ display:flex; gap: 10px; margin-top: 16px; }
   .modal-actions button{
     flex: 1;
@@ -406,20 +386,6 @@
   .btn-submit{ background: var(--ink); color: var(--card); }
 
   .hint{ font-size: 0.72rem; color: var(--ink-soft); text-align:center; margin-top: 4px; }
-
-  /* Lightbox */
-  .lightbox-overlay{
-    position: fixed; inset:0; background: rgba(10,7,4,0.85);
-    display:flex; align-items:center; justify-content:center;
-    z-index: 20; padding: 20px;
-  }
-  .lightbox-overlay img{ max-width: 100%; max-height: 85vh; border-radius: 4px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
-  .lightbox-close{
-    position:absolute; top:20px; right:24px;
-    width:36px; height:36px; border-radius:50%;
-    border:none; background: rgba(255,255,255,0.15); color:#fff;
-    font-size:1.3rem; cursor:pointer;
-  }
 
   /* Alerts modal */
   .watch-list{ margin: 10px 0 16px; }
@@ -451,6 +417,8 @@
 
 <div class="board">
   <header class="board-header">
+    <img src="logo.png" alt="Amrita School of Engineering, Kollam logo" class="college-logo" onerror="this.style.display='none'">
+    <p class="college-name">Amrita School of Engineering · Kollam</p>
     <h1>Lost &amp; Found</h1>
     <p class="tagline">Pin up what you've lost. Post what you've found. Let's get it back home.</p>
     <div class="header-btns">
@@ -540,15 +508,6 @@
       <input type="text" id="f-contact" placeholder="Email or phone number" required maxlength="60">
     </div>
 
-    <div class="field">
-      <label for="f-photos">Photos (optional, up to 3)</label>
-      <div class="photo-input-wrap">
-        <input type="file" id="f-photos" accept="image/*" multiple>
-        <div class="photo-previews" id="photoPreviews"></div>
-        <div class="photo-hint" id="photoHint">Photos are resized and stored with the post.</div>
-      </div>
-    </div>
-
     <p class="hint">Flyers are visible to everyone on this board.</p>
 
     <div class="modal-actions">
@@ -604,12 +563,6 @@
   </div>
 </div>
 
-<!-- Lightbox -->
-<div class="lightbox-overlay" id="lightboxOverlay" hidden>
-  <button class="lightbox-close" id="lightboxClose">✕</button>
-  <img id="lightboxImg" src="" alt="Item photo">
-</div>
-
 <script>
 (function(){
   const CATEGORY_ICONS = {
@@ -628,9 +581,6 @@
   const tabs = document.getElementById('tabs');
   const searchInput = document.getElementById('searchInput');
   const categoryFilter = document.getElementById('categoryFilter');
-  const photoInput = document.getElementById('f-photos');
-  const photoPreviews = document.getElementById('photoPreviews');
-  const photoHint = document.getElementById('photoHint');
 
   const alertBtn = document.getElementById('alertBtn');
   const alertOverlay = document.getElementById('alertOverlay');
@@ -639,14 +589,9 @@
   const watchList = document.getElementById('watchList');
   const notifPermHint = document.getElementById('notifPermHint');
 
-  const lightboxOverlay = document.getElementById('lightboxOverlay');
-  const lightboxImg = document.getElementById('lightboxImg');
-  const lightboxClose = document.getElementById('lightboxClose');
-
   let items = [];
   let currentType = 'lost';
   let activeFilter = 'all';
-  let pendingPhotos = [];
   let watches = [];
   let seenIds = new Set();
   let pollTimer = null;
@@ -673,7 +618,7 @@
       if(!result){ throw new Error('no result'); }
     }catch(e){
       console.error('Could not save to the board', e);
-      alert('Sorry — that post could not be saved (it may be too large with photos attached). Try smaller or fewer photos.');
+      alert('Sorry — that post could not be saved. Please try again.');
     }
   }
 
@@ -753,28 +698,10 @@
       }
       card.appendChild(stamp);
 
-      if(it.photos && it.photos.length){
-        const wrap = document.createElement('div');
-        wrap.className = 'photo-wrap';
-        const img = document.createElement('img');
-        img.className = 'card-photo';
-        img.src = it.photos[0];
-        img.alt = it.title;
-        img.addEventListener('click', () => openLightbox(it.photos[0]));
-        wrap.appendChild(img);
-        if(it.photos.length > 1){
-          const count = document.createElement('div');
-          count.className = 'photo-count';
-          count.textContent = '+' + (it.photos.length - 1) + ' more';
-          wrap.appendChild(count);
-        }
-        card.appendChild(wrap);
-      } else {
-        const icon = document.createElement('div');
-        icon.className = 'card-icon';
-        icon.textContent = CATEGORY_ICONS[it.category] || '📦';
-        card.appendChild(icon);
-      }
+      const icon = document.createElement('div');
+      icon.className = 'card-icon';
+      icon.textContent = CATEGORY_ICONS[it.category] || '📦';
+      card.appendChild(icon);
 
       const h3 = document.createElement('h3');
       h3.textContent = it.title;
@@ -829,93 +756,20 @@
     await saveItems();
   }
 
-  function compressImage(file, maxDim, quality){
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          let w = img.width, h = img.height;
-          if(w > h && w > maxDim){ h = Math.round(h * maxDim / w); w = maxDim; }
-          else if(h > maxDim){ w = Math.round(w * maxDim / h); h = maxDim; }
-          const canvas = document.createElement('canvas');
-          canvas.width = w; canvas.height = h;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, w, h);
-          resolve(canvas.toDataURL('image/jpeg', quality));
-        };
-        img.onerror = reject;
-        img.src = e.target.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function renderPhotoPreviews(){
-    photoPreviews.innerHTML = '';
-    pendingPhotos.forEach((src, idx) => {
-      const thumb = document.createElement('div');
-      thumb.className = 'thumb';
-      const img = document.createElement('img');
-      img.src = src;
-      thumb.appendChild(img);
-      const rm = document.createElement('button');
-      rm.type = 'button';
-      rm.textContent = '✕';
-      rm.addEventListener('click', () => { pendingPhotos.splice(idx,1); renderPhotoPreviews(); });
-      thumb.appendChild(rm);
-      photoPreviews.appendChild(thumb);
-    });
-    photoHint.textContent = pendingPhotos.length
-      ? pendingPhotos.length + ' photo(s) attached — resized to keep the post small.'
-      : 'Photos are resized and stored with the post.';
-  }
-
-  photoInput.addEventListener('change', async () => {
-    const files = Array.from(photoInput.files || []);
-    const room = 3 - pendingPhotos.length;
-    const toProcess = files.slice(0, room);
-    if(files.length > room){
-      photoHint.textContent = 'Only ' + room + ' more photo(s) can be added (max 3 total).';
-    }
-    for(const f of toProcess){
-      try{
-        const dataUrl = await compressImage(f, 800, 0.7);
-        pendingPhotos.push(dataUrl);
-      }catch(e){ console.error('Could not process photo', e); }
-    }
-    photoInput.value = '';
-    renderPhotoPreviews();
-  });
-
-  function openLightbox(src){
-    lightboxImg.src = src;
-    lightboxOverlay.hidden = false;
-  }
-  function closeLightbox(){ lightboxOverlay.hidden = true; lightboxImg.src=''; }
-  lightboxClose.addEventListener('click', closeLightbox);
-  lightboxOverlay.addEventListener('click', (e) => { if(e.target === lightboxOverlay) closeLightbox(); });
-
   function closeAllModals(){
     modalOverlay.hidden = true;
     alertOverlay.hidden = true;
-    lightboxOverlay.hidden = true;
   }
 
   function openModal(){
     closeAllModals();
     postForm.reset();
-    pendingPhotos = [];
-    renderPhotoPreviews();
     document.getElementById('f-date').valueAsDate = new Date();
     setType('lost');
     modalOverlay.hidden = false;
   }
   function closeModal(){
     modalOverlay.hidden = true;
-    pendingPhotos = [];
-    renderPhotoPreviews();
   }
 
   function setType(type){
@@ -939,7 +793,6 @@
     if(e.key !== 'Escape') return;
     if(!modalOverlay.hidden) closeModal();
     if(!alertOverlay.hidden) alertOverlay.hidden = true;
-    if(!lightboxOverlay.hidden) closeLightbox();
   });
 
   postForm.addEventListener('submit', async (e) => {
@@ -956,7 +809,6 @@
       location: document.getElementById('f-location').value.trim(),
       date: document.getElementById('f-date').value,
       contact: document.getElementById('f-contact').value.trim(),
-      photos: pendingPhotos.slice(),
       resolved: false,
       createdAt: Date.now()
     };
